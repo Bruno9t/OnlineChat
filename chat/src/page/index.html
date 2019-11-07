@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SuperChat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class='container'>
+        <input type="text" class ='user' placeholder="Your name">
+        
+            <select multiple id="chat"></select>
+
+        <form onsubmit="sendTo(event)">
+            <textarea autofocus autocapitalize="true" cols="30" rows="5" wrap="hard" class ='tex'placeholder="Write a message..."></textarea>
+            <button class = 'btn'  type="submit">Send</button>
+        </form>
+        <button class = 'btn' onclick="cleanMessages()">Clean messages</button>
+        <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+        var socket = io('http://localhost:3333')
+
+        function renderMessage(message){
+            var chat = document.querySelector('select#chat')
+            var item = document.createElement('option')
+    
+            item.innerHTML = `<strong>${message.auth}</strong> : ${message.message} `
+            chat.appendChild(item)
+        }
+
+        socket.on('recMess',function(message){
+            renderMessage(message)
+        })
+
+        socket.on('preMess',function(messages){
+            for(message of messages){
+                renderMessage(message)
+            }
+        })
+
+        function sendTo(e){
+            e.preventDefault()
+            
+            var auth = document.querySelector('input.user')
+            var message = document.querySelector('textarea.tex')
+
+            
+          if(auth.value.length && message.value.length ){
+            var objectMessage = {
+                auth:auth.value,
+                message:message.value,
+            }
+            renderMessage(objectMessage)
+            socket.emit('sendMessage',objectMessage)
+            message.value = ' '
+            focus()
+
+          }else{
+              window.confirm('Did you write your name or text?')
+          }
+        }
+        function cleanMessages(){
+            var res = window.confirm('Do you want to clean all messages?')
+            var chat = document.querySelector('select#chat')
+
+
+            if(res){
+                chat.innerHTML = ''
+                socket.emit('clean',{})
+            }
+        }
+
+        
+    </script>
+    </div>
+</body>
+</html>
